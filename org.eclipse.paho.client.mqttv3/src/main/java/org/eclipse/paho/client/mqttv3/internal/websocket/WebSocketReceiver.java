@@ -100,20 +100,22 @@ public class WebSocketReceiver implements Runnable{
 				//@TRACE 852=network read message
 				log.fine(CLASS_NAME, methodName, "852");
 				receiving = input.available() > 0;
-				WebSocketFrame incomingFrame = new WebSocketFrame(input);
-				if(!incomingFrame.isCloseFlag()){
-					for(int i = 0; i < incomingFrame.getPayload().length; i++){
-						pipedOutputStream.write(incomingFrame.getPayload()[i]);
+				if (receiving) {
+					WebSocketFrame incomingFrame = new WebSocketFrame(input);
+					if(!incomingFrame.isCloseFlag()){
+						for(int i = 0; i < incomingFrame.getPayload().length; i++){
+							pipedOutputStream.write(incomingFrame.getPayload()[i]);
+						}
+
+						pipedOutputStream.flush();
+					} else {
+						if(!stopping){
+							throw new IOException("Server sent a WebSocket Frame with the Stop OpCode");
+						}
 					}
 
-					pipedOutputStream.flush();
-				} else {
-					if(!stopping){
-						throw new IOException("Server sent a WebSocket Frame with the Stop OpCode");
-					}
+					receiving = false;
 				}
-
-				receiving = false;
 
 			} catch (IOException ex) {
 				// Exception occurred whilst reading the stream.
